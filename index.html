@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light" />
+<title>خزنة العائلة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    color-scheme: only light;
+    --navy:#082052;          /* أساسي */
+    --navy-2:#0c2a6b;        /* تدرّج أفتح */
+    --navy-deep:#05163a;     /* عمق */
+    --cream:#F8F0E5;         /* خلفية */
+    --cream-2:#fffaf3;       /* بطاقات */
+    --gold:#c6a04e;          /* لمسة فخامة */
+    --gold-soft:#e3cd9a;
+    --ink:#16203a;
+    --muted:#6a7390;
+    --line:#e7ddcb;
+    --ok:#1f7a52;
+    --ok-bg:#e3f1e8;
+    --warn:#a6601a;
+    --warn-bg:#f6e9d6;
+    --danger:#a32f2f;
+    --danger-bg:#f6e0dd;
+    --shadow:0 10px 30px rgba(8,32,82,.10);
+    --shadow-sm:0 4px 14px rgba(8,32,82,.07);
+    --r:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Tajawal',system-ui,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.kufi{font-family:'Reem Kufi',serif;font-weight:600;letter-spacing:.2px}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    background:linear-gradient(135deg,var(--navy-deep),var(--navy) 55%,var(--navy-2));
+    color:#fff;position:sticky;top:0;z-index:40;
+    border-bottom:1px solid rgba(198,160,78,.35);
+  }
+  .topbar-inner{max-width:1120px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:14px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .seal{width:42px;height:42px;flex:none}
+  .brand h1{font-size:21px;color:#fff;line-height:1.1}
+  .brand .sub{font-size:11.5px;color:var(--gold-soft);font-family:'Tajawal';letter-spacing:2px}
+  .topbar .spacer{flex:1}
+  .mgr-toggle{
+    display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.07);
+    border:1px solid rgba(198,160,78,.4);border-radius:999px;padding:7px 14px;color:#fff;
+    font-size:13px;font-weight:500;transition:.2s;
+  }
+  .mgr-toggle:hover{background:rgba(255,255,255,.14)}
+  .mgr-dot{width:8px;height:8px;border-radius:50%;background:#7d8aa8;transition:.2s}
+  .mgr-toggle.on .mgr-dot{background:var(--gold);box-shadow:0 0 0 4px rgba(198,160,78,.25)}
+  .mgr-toggle.on{border-color:var(--gold)}
+
+  /* ===== Tabs ===== */
+  .tabs{background:var(--navy-deep);position:sticky;top:71px;z-index:39}
+  .tabs-inner{max-width:1120px;margin:0 auto;padding:0 14px;display:flex;gap:4px;overflow-x:auto}
+  .tab{color:#aab6d4;padding:13px 18px;font-size:14.5px;font-weight:500;white-space:nowrap;
+       border-bottom:2.5px solid transparent;transition:.18s}
+  .tab:hover{color:#fff}
+  .tab.active{color:#fff;border-color:var(--gold)}
+
+  /* ===== Layout ===== */
+  main{max-width:1120px;margin:0 auto;padding:28px 22px 80px}
+  .view{display:none;animation:fade .35s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .page-head .eyebrow{font-size:12px;letter-spacing:3px;color:var(--gold);font-weight:700;margin-bottom:4px}
+  .page-head h2{font-size:27px;color:var(--navy)}
+  .page-head p{color:var(--muted);font-size:14px;margin-top:3px}
+
+  /* ===== Buttons ===== */
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:11px 18px;
+       font-size:14px;font-weight:700;transition:.18s;border:1px solid transparent}
+  .btn-primary{background:var(--navy);color:#fff}
+  .btn-primary:hover{background:var(--navy-2)}
+  .btn-gold{background:var(--gold);color:var(--navy-deep)}
+  .btn-gold:hover{filter:brightness(1.06)}
+  .btn-ghost{background:transparent;color:var(--navy);border-color:var(--line)}
+  .btn-ghost:hover{background:#fff;border-color:var(--gold)}
+  .btn-sm{padding:8px 13px;font-size:13px;border-radius:10px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ===== Cards / grid ===== */
+  .grid{display:grid;gap:18px}
+  .stat-grid{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+  .vault-grid{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+
+  .stat{
+    background:var(--cream-2);border:1px solid var(--line);border-radius:var(--r);
+    padding:20px 22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+  }
+  .stat::after{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--gold);opacity:.0}
+  .stat .label{font-size:13px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:8px}
+  .stat .value{font-size:29px;font-weight:800;color:var(--navy);margin-top:8px;line-height:1.1}
+  .stat .value .cur{font-size:14px;color:var(--muted);font-weight:600;margin-inline-start:4px}
+  .stat .foot{font-size:12.5px;color:var(--muted);margin-top:7px}
+  .stat.accent{background:linear-gradient(150deg,var(--navy),var(--navy-2));border-color:transparent}
+  .stat.accent .label,.stat.accent .foot{color:#bcc7e3}
+  .stat.accent .value{color:#fff}
+  .stat.accent .value .cur{color:var(--gold-soft)}
+
+  .card{background:var(--cream-2);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm)}
+  .card-table{background:var(--cream-2);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* vault card */
+  .vault{padding:0;overflow:hidden;display:flex;flex-direction:column;transition:.2s}
+  .vault:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+  .vault .v-top{background:linear-gradient(140deg,var(--navy),var(--navy-2));color:#fff;padding:18px 20px;position:relative}
+  .v-top .seal-wm{position:absolute;left:-14px;bottom:-22px;width:96px;opacity:.13}
+  .v-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 10px;border-radius:999px;
+           background:rgba(198,160,78,.2);color:var(--gold-soft);border:1px solid rgba(198,160,78,.4);margin-bottom:9px}
+  .v-badge.ext{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}
+  .vault h3{font-size:19px;color:#fff;position:relative}
+  .v-cycle{font-size:12.5px;color:#aeb9d8;margin-top:3px;position:relative}
+  .v-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px;flex:1}
+  .v-balance{display:flex;align-items:baseline;justify-content:space-between}
+  .v-balance .lbl{font-size:12.5px;color:var(--muted)}
+  .v-balance .amt{font-size:25px;font-weight:800;color:var(--navy)}
+  .v-meta{display:flex;gap:18px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .v-meta b{color:var(--ink);font-weight:700}
+  .progress{height:8px;background:#efe6d6;border-radius:99px;overflow:hidden}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-soft));border-radius:99px}
+  .v-foot{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--line);background:#fff}
+
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .chip.ok{background:var(--ok-bg);color:var(--ok)}
+  .chip.late{background:var(--warn-bg);color:var(--warn)}
+  .chip.debt{background:var(--danger-bg);color:var(--danger)}
+
+  /* tables */
+  .tbl{width:100%;border-collapse:collapse;font-size:14px}
+  .tbl th{ text-align:right;color:var(--muted);font-weight:600;font-size:12.5px;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .tbl td{padding:12px 14px;border-bottom:1px solid #f0e8da}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tr:hover td{background:#fffdf8}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;display:inline-flex;
+          align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+  .person{display:flex;align-items:center;gap:11px}
+
+  .section-title{font-family:'Reem Kufi';font-size:17px;color:var(--navy);margin:26px 0 13px;display:flex;align-items:center;gap:10px}
+  .section-title::before{content:"";width:6px;height:18px;background:var(--gold);border-radius:3px;display:inline-block}
+
+  .empty{text-align:center;padding:46px 20px;color:var(--muted)}
+  .empty .seal{width:54px;opacity:.4;margin-bottom:12px}
+
+  /* manager-only hint */
+  .mgr-only{display:none!important}
+  body.mgr .mgr-only{display:inline-flex!important}
+  .locked-note{font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+
+  /* ===== Modal ===== */
+  .overlay{position:fixed;inset:0;background:rgba(5,16,40,.55);backdrop-filter:blur(3px);
+           display:none;align-items:center;justify-content:center;z-index:60;padding:18px}
+  .overlay.show{display:flex}
+  .modal{background:var(--cream-2);border-radius:22px;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(5,16,40,.4);
+         max-height:90vh;overflow:auto;animation:pop .25s ease}
+  @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .modal-head{background:linear-gradient(140deg,var(--navy),var(--navy-2));color:#fff;padding:20px 24px;
+              border-radius:22px 22px 0 0;display:flex;align-items:center;justify-content:space-between}
+  .modal-head h3{color:#fff;font-size:19px}
+  .modal-head .x{color:#cfd8ee;font-size:24px;line-height:1;padding:2px 6px;border-radius:8px}
+  .modal-head .x:hover{background:rgba(255,255,255,.12);color:#fff}
+  .modal-body{padding:22px 24px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:7px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;
+    font-family:inherit;font-size:14px;color:var(--ink);transition:.15s
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,160,78,.18)}
+  .field .hint{font-size:12px;color:var(--muted);margin-top:5px}
+  .checks{display:flex;flex-direction:column;gap:9px;max-height:200px;overflow:auto;border:1px solid var(--line);
+          border-radius:12px;padding:12px;background:#fff}
+  .check{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+  .check input{width:auto;accent-color:var(--gold)}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-start;padding:18px 24px;border-top:1px solid var(--line)}
+  .seg{display:flex;gap:8px;flex-wrap:wrap}
+  .seg label{flex:1;min-width:120px}
+  .seg .opt{display:block;border:1px solid var(--line);border-radius:11px;padding:11px;text-align:center;font-size:13.5px;
+            font-weight:600;cursor:pointer;background:#fff;transition:.15s}
+  .seg input{display:none}
+  .seg input:checked + .opt{border-color:var(--gold);background:#fff7e9;color:var(--navy);box-shadow:0 0 0 2px rgba(198,160,78,.2) inset}
+
+  /* toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy-deep);
+         color:#fff;padding:13px 22px;border-radius:13px;font-size:14px;font-weight:500;box-shadow:0 12px 30px rgba(5,16,40,.4);
+         opacity:0;pointer-events:none;transition:.3s;z-index:80;border:1px solid rgba(198,160,78,.4)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast b{color:var(--gold-soft)}
+
+  /* detail panel header */
+  .detail-hero{background:linear-gradient(140deg,var(--navy-deep),var(--navy) 60%,var(--navy-2));color:#fff;
+               border-radius:var(--r);padding:26px 26px;position:relative;overflow:hidden;margin-bottom:8px}
+  .detail-hero .seal-wm{position:absolute;left:-20px;top:-20px;width:150px;opacity:.12}
+  .detail-hero .v-badge{margin-bottom:10px}
+  .detail-hero h2{color:#fff;font-size:25px}
+  .detail-hero .dh-balance{margin-top:16px;display:flex;gap:30px;flex-wrap:wrap}
+  .dh-balance .it .l{font-size:12px;color:#aeb9d8}
+  .dh-balance .it .v{font-size:24px;font-weight:800;color:#fff;margin-top:2px}
+  .dh-balance .it .v.gold{color:var(--gold-soft)}
+  .back-link{display:inline-flex;align-items:center;gap:7px;color:var(--navy);font-weight:700;font-size:14px;margin-bottom:16px}
+  .back-link:hover{color:var(--gold)}
+
+  .row-actions{display:flex;gap:7px;flex-wrap:wrap}
+  .txn-type{font-size:12px;font-weight:700;padding:3px 9px;border-radius:7px}
+  .t-in{background:var(--ok-bg);color:var(--ok)}
+  .t-out{background:var(--danger-bg);color:var(--danger)}
+  .amount-in{color:var(--ok);font-weight:700}
+  .amount-out{color:var(--danger);font-weight:700}
+
+  /* ===== Gate (بوابة الدخول) ===== */
+  .gate{position:fixed;inset:0;z-index:100;background:linear-gradient(150deg,var(--navy-deep),var(--navy) 55%,var(--navy-2));
+        display:flex;align-items:center;justify-content:center;padding:22px;transition:opacity .4s,visibility .4s}
+  .gate.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .gate-card{width:100%;max-width:400px;text-align:center;color:#fff}
+  .gate-card .seal{width:74px;height:74px;margin:0 auto 14px;display:block}
+  .gate-card h1{font-family:'Reem Kufi';font-size:28px;color:#fff;margin-bottom:4px}
+  .gate-card .sub{font-size:12px;letter-spacing:3px;color:var(--gold-soft);margin-bottom:30px}
+  .gate-form{background:rgba(255,255,255,.06);border:1px solid rgba(198,160,78,.4);border-radius:20px;padding:26px 24px}
+  .gate-form label{display:block;text-align:right;font-size:13.5px;font-weight:700;color:#dfe6f5;margin-bottom:9px}
+  .gate-input{width:100%;padding:13px 15px;border:1px solid rgba(255,255,255,.18);border-radius:13px;
+        background:rgba(0,0,0,.18);color:#fff;font-family:inherit;font-size:16px;text-align:center;letter-spacing:2px;transition:.15s}
+  .gate-input::placeholder{color:#7d8aa8;letter-spacing:normal}
+  .gate-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,160,78,.25)}
+  .gate-form .btn{width:100%;justify-content:center;margin-top:16px;padding:13px}
+  .gate-err{color:#ffb4ab;font-size:13px;margin-top:12px;min-height:18px;font-weight:500}
+  .gate-switch{margin-top:22px;font-size:13px}
+  .gate-switch a{color:var(--gold-soft);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .gate-switch a:hover{color:#fff}
+  .gate-back{color:#aab6d4;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;margin-bottom:14px}
+  .gate-back:hover{color:#fff}
+  .demo-note{margin-top:18px;font-size:11.5px;color:#8b97b6;line-height:1.7}
+  .demo-note code{background:rgba(255,255,255,.1);color:var(--gold-soft);padding:1px 7px;border-radius:6px;font-family:monospace}
+
+  .lock-btn{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+        border-radius:999px;padding:7px 13px;color:#cfd8ee;font-size:13px;font-weight:500;transition:.18s}
+  .lock-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+
+  @media(max-width:560px){
+    .brand h1{font-size:18px}
+    .page-head h2{font-size:23px}
+    .topbar-inner{padding:12px 16px}
+    main{padding:22px 16px 70px}
+    .tbl{min-width:560px}
+    .tbl th,.tbl td{padding:10px 12px}
+    .brand .sub{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== بوابة الدخول ===== -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <svg class="seal" viewBox="0 0 64 64" fill="none">
+      <path d="M32 3l24 9v18c0 16-10.4 26.4-24 31C18.4 56.4 8 46 8 30V12l24-9z" fill="#0a2a66" stroke="#c6a04e" stroke-width="2.2"/>
+      <circle cx="32" cy="28" r="7" fill="none" stroke="#e3cd9a" stroke-width="2.4"/>
+      <rect x="30.4" y="32" width="3.2" height="11" rx="1.6" fill="#e3cd9a"/>
+    </svg>
+    <h1>خزنة العائلة</h1>
+    <div class="sub">FAMILY&nbsp;VAULT</div>
+
+    <!-- دخول العائلة بالرمز -->
+    <div class="gate-form" id="gateFamily">
+      <label for="famCode">رمز العائلة للعرض</label>
+      <input class="gate-input" id="famCode" type="password" inputmode="numeric" placeholder="••••" autocomplete="off"
+             onkeydown="if(event.key==='Enter')unlockFamily()"/>
+      <button class="btn btn-gold" onclick="unlockFamily()">دخول</button>
+      <div class="gate-err" id="famErr"></div>
+      <div class="gate-switch">للمدير؟ <a onclick="showGate('manager')">تسجيل دخول المدير</a></div>
+    </div>
+
+    <!-- دخول المدير -->
+    <div class="gate-form" id="gateManager" style="display:none">
+      <div class="gate-back" onclick="showGate('family')">↪ رجوع</div>
+      <label for="mgrEmail">بريد المدير</label>
+      <input class="gate-input" id="mgrEmail" type="email" placeholder="manager@…" style="text-align:right;letter-spacing:normal" autocomplete="username"/>
+      <label for="mgrPass" style="margin-top:14px">كلمة المرور</label>
+      <input class="gate-input" id="mgrPass" type="password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')loginManager()"/>
+      <button class="btn btn-gold" onclick="loginManager()">دخول المدير</button>
+      <div class="gate-err" id="mgrErr"></div>
+    </div>
+
+    <div class="demo-note" id="demoNote">
+      خزنة العائلة — للعرض أدخل رمز العائلة، وللإدارة سجّل دخول المدير.
+    </div>
+  </div>
+</div>
+
+
+<!-- Top bar -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="seal" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <path d="M32 3l24 9v18c0 16-10.4 26.4-24 31C18.4 56.4 8 46 8 30V12l24-9z" fill="#0a2a66" stroke="#c6a04e" stroke-width="2.2"/>
+        <path d="M32 9l18 6.8V30c0 12.6-8 21.2-18 25-10-3.8-18-12.4-18-25V15.8L32 9z" stroke="#c6a04e" stroke-width="1" opacity=".5"/>
+        <circle cx="32" cy="28" r="7" fill="none" stroke="#e3cd9a" stroke-width="2.4"/>
+        <rect x="30.4" y="32" width="3.2" height="11" rx="1.6" fill="#e3cd9a"/>
+        <circle cx="32" cy="28" r="2.4" fill="#0a2a66"/>
+      </svg>
+      <div>
+        <h1>خزنة العائلة</h1>
+        <div class="sub">FAMILY&nbsp;VAULT</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span class="mgr-toggle" id="rolePill"><span class="mgr-dot"></span><span id="mgrLabel">عرض فقط</span></span>
+    <button class="lock-btn" onclick="lockApp()">قفل ⟲</button>
+  </div>
+</header>
+
+<!-- Tabs -->
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab active" data-view="dashboard" onclick="go('dashboard')">الرئيسية</button>
+    <button class="tab" data-view="vaults" onclick="go('vaults')">الخزنات</button>
+    <button class="tab" data-view="members" onclick="go('members')">الأعضاء</button>
+    <button class="tab" data-view="debts" onclick="go('debts')">الديون</button>
+  </div>
+</nav>
+
+<main>
+  <section id="dashboard" class="view active"></section>
+  <section id="vaults" class="view"></section>
+  <section id="vault-detail" class="view"></section>
+  <section id="members" class="view"></section>
+  <section id="debts" class="view"></section>
+</main>
+
+<!-- Modal host -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   حالة التطبيق (بيانات تجريبية في الذاكرة).
+   عند الربط بـ Supabase، استبدل دوال data.* باستعلامات/إدراج.
+   ============================================================ */
+const CUR = 'ر.س';
+const CYCLES = {weekly:'أسبوعية', monthly:'شهرية', quarterly:'ربع سنوية', semiannual:'نصف سنوية', annual:'سنوية'};
+const CURRENT_PERIOD = '2026-06'; // الدورة الحالية (للعرض التجريبي)
+
+let isManager = false;
+let currentVaultId = null;
+
+// تُملأ من Supabase عبر loadData() بعد الدخول. الأشكال هنا مطابقة لما تتوقعه دوال العرض.
+const db = { members: [], vaults: [], txns: [] };
+
+/* ---------- حسابات ---------- */
+const memberName = id => (db.members.find(m=>m.id===id)||{}).name || '—';
+const vaultById  = id => db.vaults.find(v=>v.id===id);
+const dir = type => ({opening:1,contribution:1,debt_repay:1,spending:-1,temp_withdraw:-1,external_repay:-1})[type];
+
+function vaultBalance(vid){
+  const v = vaultById(vid);
+  let b = v.opening||0;
+  db.txns.filter(x=>x.vault===vid).forEach(x=> b += x.amount*dir(x.type));
+  return b;
+}
+function vaultTxns(vid){return db.txns.filter(x=>x.vault===vid).slice().sort((a,b)=> (a.date<b.date?1:-1))}
+
+// اشتراكات الدورة الحالية لخزنة: من سدّد ومن تأخّر
+function cycleStatus(vid){
+  const v = vaultById(vid);
+  const paid = new Set(db.txns.filter(x=>x.vault===vid && x.type==='contribution' && x.period===CURRENT_PERIOD).map(x=>x.member));
+  return v.members.map(mid => ({member:mid, paid:paid.has(mid)}));
+}
+// ديون عضو من السحب المؤقت، مفصّلة بالخزنة
+function memberDebts(mid){
+  const map = {};
+  db.txns.filter(x=>x.member===mid && (x.type==='temp_withdraw'||x.type==='debt_repay')).forEach(x=>{
+    map[x.vault] = (map[x.vault]||0) + x.amount*(x.type==='temp_withdraw'?1:-1);
+  });
+  return Object.entries(map).filter(([,amt])=>amt>0.001).map(([vid,amt])=>({vault:vid, remaining:amt}));
+}
+function memberDebtTotal(mid){return memberDebts(mid).reduce((s,d)=>s+d.remaining,0)}
+function allDebtsTotal(){return db.members.reduce((s,m)=>s+memberDebtTotal(m.id),0)}
+
+function externalRemaining(vid){
+  const v = vaultById(vid);
+  const repaid = db.txns.filter(x=>x.vault===vid && x.type==='external_repay').reduce((s,x)=>s+x.amount,0);
+  return {repaid, remaining:(v.creditorTotal||0)-repaid};
+}
+
+const fmt = n => Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
+const money = n => `<span class="num">${fmt(n)}</span> <span class="cur">${CUR}</span>`;
+
+/* ============================================================
+   التنقّل والعرض
+   ============================================================ */
+function go(view){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
+  showView(view);
+  if(view==='dashboard')renderDashboard();
+  if(view==='vaults')renderVaults();
+  if(view==='members')renderMembers();
+  if(view==='debts')renderDebts();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id===id))}
+
+/* ============================================================
+   البوابة والمصادقة — عبر Supabase Auth
+   ------------------------------------------------------------
+   دخول العائلة = تسجيل دخول حساب العرض المشترك (VIEWER_EMAIL) وكلمة مروره رمز العائلة.
+   دخول المدير = حساب المدير المسجّل في جدول managers (صلاحية الكتابة).
+   ============================================================ */
+
+// ----- إعدادات الربط -----
+const SUPABASE_URL  = 'https://gdknmwiwhfrggwgiojuy.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdka25td2l3aGZyZ2d3Z2lvanV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NDY3OTUsImV4cCI6MjA5OTAyMjc5NX0.QJepWuuLlGZAw6b5XDNfaNnRB7suySE9LJv8YIk8n5k';
+const VIEWER_EMAIL  = 'bajahawazzam@gmail.com';   // بريد حساب العرض المشترك (كلمة مروره = رمز العائلة)
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function showGate(which){
+  document.getElementById('gateFamily').style.display  = which==='family' ?'block':'none';
+  document.getElementById('gateManager').style.display = which==='manager'?'block':'none';
+  document.getElementById('famErr').textContent='';
+  document.getElementById('mgrErr').textContent='';
+}
+
+async function unlockFamily(){
+  const code = document.getElementById('famCode').value.trim();
+  const err  = document.getElementById('famErr');
+  const {error} = await sb.auth.signInWithPassword({email:VIEWER_EMAIL, password:code});
+  if(error){ err.textContent='رمز غير صحيح'; return; }
+  await enterApp(false);
+}
+
+async function loginManager(){
+  const email = document.getElementById('mgrEmail').value.trim();
+  const pass  = document.getElementById('mgrPass').value;
+  const err   = document.getElementById('mgrErr');
+  const {data,error} = await sb.auth.signInWithPassword({email, password:pass});
+  if(error){ err.textContent='بيانات الدخول غير صحيحة'; return; }
+  const {data:m} = await sb.from('managers').select('user_id').eq('user_id', data.user.id).maybeSingle();
+  await enterApp(!!m);   // صلاحية الكتابة فقط إن كان ضمن جدول المدراء
+}
+
+async function enterApp(asManager){
+  isManager = asManager;
+  document.body.classList.toggle('mgr', isManager);
+  document.getElementById('rolePill').classList.toggle('on', isManager);
+  document.getElementById('mgrLabel').textContent = isManager ? 'وضع المدير' : 'عرض فقط';
+  await loadData();
+  document.getElementById('gate').classList.add('hidden');
+  go('dashboard');
+}
+
+// جلب كل البيانات من Supabase وتحويلها لأشكال دوال العرض
+async function loadData(){
+  const [mr, vr, vmr, tr] = await Promise.all([
+    sb.from('members').select('*').order('created_at'),
+    sb.from('vaults').select('*').order('created_at'),
+    sb.from('vault_members').select('*'),
+    sb.from('transactions').select('*').order('created_at'),
+  ]);
+  const members = mr.data||[], vaults = vr.data||[], vm = vmr.data||[], txns = tr.data||[];
+  db.members = members.map(m=>({id:m.id, name:m.name}));
+  db.vaults  = vaults.map(v=>({
+    id:v.id, name:v.name, type:v.type, cycle:v.cycle,
+    amount:+v.contribution_amount, opening:+v.opening_balance,
+    target:v.target_amount!=null?+v.target_amount:null,
+    creditorName:v.creditor_name,
+    creditorTotal:v.creditor_total!=null?+v.creditor_total:null,
+    members:vm.filter(x=>x.vault_id===v.id).map(x=>x.member_id),
+  }));
+  db.txns = txns.map(t=>({
+    id:t.id, vault:t.vault_id, type:t.type, amount:+t.amount,
+    member:t.member_id, note:t.note, period:t.period,
+    date:(t.created_at||'').slice(0,10),
+  }));
+}
+
+// إعادة تحميل ثم إعادة رسم الصفحة النشطة
+async function reload(){
+  await loadData();
+  if(currentVaultId && document.getElementById('vault-detail').classList.contains('active')){
+    renderVaultDetail(currentVaultId);
+  } else {
+    const a=[...document.querySelectorAll('.tab')].find(t=>t.classList.contains('active'));
+    go(a?a.dataset.view:'dashboard');
+  }
+}
+
+async function lockApp(){
+  await sb.auth.signOut();
+  isManager=false; currentVaultId=null;
+  document.body.classList.remove('mgr');
+  document.getElementById('gate').classList.remove('hidden');
+  showGate('family');
+  document.getElementById('famCode').value='';
+  document.getElementById('mgrPass').value='';
+}
+
+/* ---------- الرئيسية ---------- */
+function renderDashboard(){
+  const totalBalance = db.vaults.reduce((s,v)=>s+vaultBalance(v.id),0);
+  // الدورة الحالية عبر الخزنات الدورية
+  let due=0, collected=0, lateCount=0;
+  db.vaults.filter(v=>v.type!=='external_debt' || true).forEach(v=>{
+    cycleStatus(v.id).forEach(s=>{ due+=v.amount; if(s.paid)collected+=v.amount; else lateCount++; });
+  });
+  const debts = allDebtsTotal();
+  const ext = db.vaults.filter(v=>v.type==='external_debt')
+                .reduce((s,v)=>s+externalRemaining(v.id).remaining,0);
+  const collectRate = due? Math.round(collected/due*100):0;
+
+  const el=document.getElementById('dashboard');
+  el.innerHTML = `
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">نظرة عامة · دورة ${CYCLES.monthly} ${CURRENT_PERIOD}</div>
+        <h2>لوحة خزنة العائلة</h2>
+        <p>إجمالي ${db.vaults.length} خزنات · ${db.members.length} أعضاء</p>
+      </div>
+      <button class="btn btn-gold mgr-only" onclick="go('vaults')">إدارة الخزنات</button>
+    </div>
+
+    <div class="grid stat-grid">
+      <div class="stat accent">
+        <div class="label">${ico('vault')} مجموع أرصدة الخزنات</div>
+        <div class="value">${fmt(totalBalance)} <span class="cur">${CUR}</span></div>
+        <div class="foot">عبر ${db.vaults.length} خزنات</div>
+      </div>
+      <div class="stat">
+        <div class="label">${ico('coins')} تحصيل الدورة الحالية</div>
+        <div class="value">${fmt(collected)} <span class="cur">${CUR}</span></div>
+        <div class="foot">من أصل ${fmt(due)} · نسبة ${collectRate}%</div>
+      </div>
+      <div class="stat">
+        <div class="label">${ico('clock')} اشتراكات متأخرة</div>
+        <div class="value" style="color:${lateCount?'var(--warn)':'var(--ok)'}">${lateCount}</div>
+        <div class="foot">${lateCount? 'بانتظار السداد':'الجميع سدّد ✦'}</div>
+      </div>
+      <div class="stat">
+        <div class="label">${ico('hand')} ديون أعضاء (سحب مؤقت)</div>
+        <div class="value" style="color:var(--danger)">${fmt(debts)} <span class="cur">${CUR}</span></div>
+        <div class="foot">مستحقة الرد للخزنات</div>
+      </div>
+      <div class="stat">
+        <div class="label">${ico('ext')} متبقٍّ لدائنين خارجيين</div>
+        <div class="value">${fmt(ext)} <span class="cur">${CUR}</span></div>
+        <div class="foot">في خزنات سداد الديون</div>
+      </div>
+    </div>
+
+    <div class="section-title">المتأخرون عن الدورة الحالية</div>
+    ${renderLateTable()}
+
+    <div class="section-title">أحدث الحركات</div>
+    <div class="card card-table">${renderRecentTxns()}</div>
+  `;
+}
+function renderLateTable(){
+  const rows=[];
+  db.vaults.forEach(v=> cycleStatus(v.id).forEach(s=>{ if(!s.paid) rows.push({m:s.member,v:v.id,amt:v.amount}); }));
+  if(!rows.length) return `<div class="card empty">${sealSvg(54)}<div>ما شاء الله — لا يوجد متأخرون في هذه الدورة.</div></div>`;
+  return `<div class="card card-table"><table class="tbl">
+    <thead><tr><th>العضو</th><th>الخزنة</th><th>المبلغ المستحق</th>${isManager?'<th>إجراء</th>':''}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><div class="person"><span class="avatar">${memberName(r.m)[0]}</span>${memberName(r.m)}</div></td>
+      <td>${vaultById(r.v).name}</td>
+      <td><span class="chip late">${fmt(r.amt)} ${CUR}</span></td>
+      ${isManager?`<td><button class="btn btn-gold btn-sm" onclick="quickPay('${r.v}','${r.m}')">تسجيل سداد</button></td>`:''}
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function renderRecentTxns(){
+  const list = db.txns.slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,6);
+  return `<table class="tbl">
+    <thead><tr><th>التاريخ</th><th>الخزنة</th><th>النوع</th><th>العضو</th><th>المبلغ</th></tr></thead>
+    <tbody>${list.map(x=>txnRow(x)).join('')}</tbody></table>`;
+}
+function txnRow(x){
+  const labels={opening:'افتتاحي',contribution:'اشتراك',spending:'صرف للغرض',temp_withdraw:'سحب مؤقت (دين)',debt_repay:'سداد دين',external_repay:'سداد للدائن'};
+  const inn = dir(x.type)>0;
+  return `<tr>
+    <td class="num" style="color:var(--muted)">${x.date}</td>
+    <td>${vaultById(x.vault).name}</td>
+    <td><span class="txn-type ${inn?'t-in':'t-out'}">${labels[x.type]}</span></td>
+    <td>${x.member?memberName(x.member):'—'}</td>
+    <td class="${inn?'amount-in':'amount-out'} num">${inn?'+':'−'}${fmt(x.amount)}</td>
+  </tr>`;
+}
+
+/* ---------- الخزنات ---------- */
+function renderVaults(){
+  const el=document.getElementById('vaults');
+  el.innerHTML=`
+    <div class="page-head">
+      <div><div class="eyebrow">إدارة</div><h2>الخزنات</h2><p>كل خزنة لها غرض ودورة ومبلغ اشتراك ثابت</p></div>
+      <button class="btn btn-primary mgr-only" onclick="openVaultModal()">${ico('plus')} خزنة جديدة</button>
+    </div>
+    <div class="grid vault-grid">${db.vaults.map(vaultCard).join('')}</div>`;
+}
+function vaultCard(v){
+  const bal=vaultBalance(v.id);
+  const isExt=v.type==='external_debt';
+  const memCount=v.members.length;
+  let progress='';
+  if(isExt){
+    const e=externalRemaining(v.id);
+    const pct=v.creditorTotal? Math.min(100,Math.round(e.repaid/v.creditorTotal*100)):0;
+    progress=`<div><div class="v-balance" style="margin-bottom:6px"><span class="lbl">سُدّد للدائن ${v.creditorName||''}</span><b class="num" style="color:var(--navy)">${pct}%</b></div>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="v-meta" style="margin-top:8px"><span>المتبقي: <b>${fmt(e.remaining)} ${CUR}</b></span></div></div>`;
+  } else if(v.target){
+    const pct=Math.min(100,Math.round(bal/v.target*100));
+    progress=`<div><div class="v-balance" style="margin-bottom:6px"><span class="lbl">نحو الهدف ${fmt(v.target)} ${CUR}</span><b class="num" style="color:var(--navy)">${pct}%</b></div>
+      <div class="progress"><i style="width:${pct}%"></i></div></div>`;
+  }
+  const late=cycleStatus(v.id).filter(s=>!s.paid).length;
+  return `<div class="card vault">
+    <div class="v-top">
+      ${sealSvg(96,'seal-wm')}
+      <span class="v-badge ${isExt?'ext':''}">${isExt?'دين خارجي':'دورية'}</span>
+      <h3>${v.name}</h3>
+      <div class="v-cycle">${CYCLES[v.cycle]} · ${fmt(v.amount)} ${CUR} لكل عضو</div>
+    </div>
+    <div class="v-body">
+      <div class="v-balance"><span class="lbl">الرصيد الحالي</span><span class="amt num">${fmt(bal)} <span style="font-size:14px;color:var(--muted)">${CUR}</span></span></div>
+      ${progress}
+      <div class="v-meta">
+        <span>${ico('users',14)} <b>${memCount}</b> أعضاء</span>
+        ${late?`<span style="color:var(--warn)">${ico('clock',14)} <b>${late}</b> متأخر</span>`:`<span style="color:var(--ok)">${ico('check',14)} الجميع سدّد</span>`}
+      </div>
+    </div>
+    <div class="v-foot">
+      <button class="btn btn-ghost btn-sm" onclick="openVaultDetail('${v.id}')">التفاصيل والحركات</button>
+      <button class="btn btn-gold btn-sm mgr-only" onclick="openWithdrawModal('${v.id}')">سحب / صرف</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- تفاصيل الخزنة ---------- */
+function openVaultDetail(vid){currentVaultId=vid;showView('vault-detail');renderVaultDetail(vid);window.scrollTo({top:0})}
+function renderVaultDetail(vid){
+  const v=vaultById(vid), bal=vaultBalance(vid), isExt=v.type==='external_debt';
+  const el=document.getElementById('vault-detail');
+  let extBlock='';
+  if(isExt){const e=externalRemaining(vid);
+    extBlock=`<div class="it"><div class="l">المتبقي للدائن (${v.creditorName||'—'})</div><div class="v gold num">${fmt(e.remaining)} ${CUR}</div></div>`;}
+  const status=cycleStatus(vid);
+  el.innerHTML=`
+    <a class="back-link" onclick="go('vaults')">${ico('back',16)} الرجوع إلى الخزنات</a>
+    <div class="detail-hero">
+      ${sealSvg(150,'seal-wm')}
+      <span class="v-badge ${isExt?'ext':''}">${isExt?'خزنة دين خارجي':'خزنة دورية'} · ${CYCLES[v.cycle]}</span>
+      <h2>${v.name}</h2>
+      <div class="dh-balance">
+        <div class="it"><div class="l">الرصيد الحالي</div><div class="v num">${fmt(bal)} ${CUR}</div></div>
+        <div class="it"><div class="l">اشتراك العضو / دورة</div><div class="v num">${fmt(v.amount)} ${CUR}</div></div>
+        ${extBlock}
+      </div>
+    </div>
+
+    ${isManager?`<div class="row-actions" style="margin:16px 0">
+      <button class="btn btn-gold btn-sm" onclick="openWithdrawModal('${vid}')">${ico('hand',14)} سحب / صرف</button>
+      ${isExt?`<button class="btn btn-primary btn-sm" onclick="openExtRepay('${vid}')">${ico('coins',14)} دفعة للدائن</button>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="openMemberToVault('${vid}')">${ico('plus',14)} إضافة عضو للخزنة</button>
+      <button class="btn btn-ghost btn-sm" onclick="openEditVault('${vid}')">تعديل المبالغ</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:#eccfcb" onclick="askDeleteVault('${vid}')">${ico('trash',14)} حذف الخزنة</button>
+    </div>`:''}
+
+    <div class="section-title">اشتراكات الدورة الحالية (${CURRENT_PERIOD})</div>
+    <div class="card card-table"><table class="tbl">
+      <thead><tr><th>العضو</th><th>الحالة</th><th>المبلغ</th>${isManager?'<th>إجراء</th>':''}</tr></thead>
+      <tbody>${status.map(s=>`<tr>
+        <td><div class="person"><span class="avatar">${memberName(s.member)[0]}</span>${memberName(s.member)}</div></td>
+        <td>${s.paid?`<span class="chip ok">${ico('check',13)} سدّد</span>`:`<span class="chip late">${ico('clock',13)} متأخر</span>`}</td>
+        <td class="num">${fmt(v.amount)} ${CUR}</td>
+        ${isManager?`<td>${s.paid?'<span class="locked-note">—</span>':`<button class="btn btn-gold btn-sm" onclick="quickPay('${vid}','${s.member}')">تسجيل سداد</button>`}</td>`:''}
+      </tr>`).join('')}</tbody></table></div>
+
+    <div class="section-title">سجل الحركات</div>
+    <div class="card card-table"><table class="tbl">
+      <thead><tr><th>التاريخ</th><th>النوع</th><th>العضو</th><th>الوصف</th><th>المبلغ</th>${isManager?'<th>تعديل</th>':''}</tr></thead>
+      <tbody>${vaultTxns(vid).map(x=>{
+        const labels={opening:'افتتاحي',contribution:'اشتراك',spending:'صرف للغرض',temp_withdraw:'سحب مؤقت (دين)',debt_repay:'سداد دين',external_repay:'سداد للدائن'};
+        const inn=dir(x.type)>0;
+        return `<tr>
+          <td class="num" style="color:var(--muted)">${x.date}</td>
+          <td><span class="txn-type ${inn?'t-in':'t-out'}">${labels[x.type]}</span></td>
+          <td>${x.member?memberName(x.member):'—'}</td>
+          <td style="color:var(--muted)">${x.note||'—'}</td>
+          <td class="${inn?'amount-in':'amount-out'} num">${inn?'+':'−'}${fmt(x.amount)}</td>
+          ${isManager?`<td><button class="btn btn-ghost btn-sm" onclick="openEditTxn('${x.id}')">تعديل</button></td>`:''}
+        </tr>`}).join('')}</tbody></table></div>`;
+}
+
+/* ---------- الأعضاء ---------- */
+function renderMembers(){
+  const el=document.getElementById('members');
+  el.innerHTML=`
+    <div class="page-head">
+      <div><div class="eyebrow">إدارة</div><h2>الأعضاء</h2><p>أضف عضوًا وحدّد اشتراكه في خزنة معيّنة أو في كل الخزنات</p></div>
+      <button class="btn btn-primary mgr-only" onclick="openMemberModal()">${ico('plus')} عضو جديد</button>
+    </div>
+    <div class="card card-table"><table class="tbl">
+      <thead><tr><th>العضو</th><th>عضوية الخزنات</th><th>الدين الحالي</th>${isManager?'<th>إجراءات</th>':''}</tr></thead>
+      <tbody>${db.members.map(m=>{
+        const vs=db.vaults.filter(v=>v.members.includes(m.id));
+        const debt=memberDebtTotal(m.id);
+        return `<tr>
+          <td><div class="person"><span class="avatar">${m.name[0]}</span><div><div style="font-weight:700">${m.name}</div></div></div></td>
+          <td style="color:var(--muted);font-size:13px">${vs.length} خزنات · ${vs.map(v=>v.name).join('، ')||'—'}</td>
+          <td>${debt>0?`<span class="chip debt">${fmt(debt)} ${CUR}</span>`:'<span class="chip ok">لا يوجد</span>'}</td>
+          ${isManager?`<td><button class="btn btn-ghost btn-sm" onclick="openEditMember('${m.id}')">تعديل</button></td>`:''}
+        </tr>`}).join('')}</tbody></table></div>`;
+}
+
+/* ---------- الديون (صفحة عامة) ---------- */
+function renderDebts(){
+  const el=document.getElementById('debts');
+  const withDebt=db.members.filter(m=>memberDebtTotal(m.id)>0);
+  const exts=db.vaults.filter(v=>v.type==='external_debt');
+  el.innerHTML=`
+    <div class="page-head">
+      <div><div class="eyebrow">شفافية</div><h2>سجل الديون</h2><p>تفصيل واضح لكل سحب مؤقت — من سحب، وكم، ومن أي خزنة</p></div>
+    </div>
+
+    <div class="section-title">${ico('hand',16)} سحوبات الأعضاء المؤقتة</div>
+    ${withDebt.length? withDebt.map(m=>{
+      const ds=memberDebts(m.id), tot=memberDebtTotal(m.id);
+      return `<div class="card" style="padding:18px 20px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div class="person"><span class="avatar">${m.name[0]}</span><div style="font-weight:700;font-size:16px">${m.name}</div></div>
+          <div style="text-align:left"><div style="font-size:12px;color:var(--muted)">إجمالي الدين</div>
+            <div class="num" style="font-size:22px;font-weight:800;color:var(--danger)">${fmt(tot)} ${CUR}</div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+          ${ds.map(d=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:11px">
+            <span>${ico('vault',14)} من خزنة <b>${vaultById(d.vault).name}</b></span>
+            <span class="num" style="font-weight:700">${fmt(d.remaining)} ${CUR}</span>
+            <button class="btn btn-gold btn-sm mgr-only" onclick="openRepay('${m.id}','${d.vault}',${d.remaining})">تسجيل سداد</button>
+          </div>`).join('')}
+        </div>
+      </div>`}).join('') : `<div class="card empty">${sealSvg(54)}<div>لا توجد سحوبات مؤقتة قائمة حاليًا.</div></div>`}
+
+    ${exts.length?`<div class="section-title">${ico('ext',16)} ديون خارجية على العائلة</div>
+      ${exts.map(v=>{const e=externalRemaining(v.id);const pct=v.creditorTotal?Math.round(e.repaid/v.creditorTotal*100):0;
+        return `<div class="card" style="padding:18px 20px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div><div style="font-weight:700;font-size:16px">${v.name}</div>
+              <div style="color:var(--muted);font-size:13px;margin-top:2px">الدائن: ${v.creditorName||'—'} · الأصل ${fmt(v.creditorTotal)} ${CUR}</div></div>
+            <div style="text-align:left"><div style="font-size:12px;color:var(--muted)">المتبقي</div>
+              <div class="num" style="font-size:22px;font-weight:800;color:var(--navy)">${fmt(e.remaining)} ${CUR}</div></div>
+          </div>
+          <div class="progress" style="margin-top:12px"><i style="width:${pct}%"></i></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">سُدّد ${fmt(e.repaid)} من ${fmt(v.creditorTotal)} (${pct}%)</div>
+        </div>`}).join('')}`:''}
+  `;
+}
+
+/* ============================================================
+   إجراءات المدير (Modals)
+   ============================================================ */
+function guard(){ if(!isManager){toast('فعّل <b>وضع المدير</b> أولًا لإدخال البيانات');return false} return true }
+function openModal(html){document.getElementById('modal').innerHTML=html;document.getElementById('overlay').classList.add('show')}
+function closeModal(){document.getElementById('overlay').classList.remove('show')}
+
+function openMemberModal(){
+  if(!guard())return;
+  openModal(`
+    <div class="modal-head"><h3>عضو جديد</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>اسم العضو</label><input id="f_name" placeholder="مثال: عبدالله القحطاني"/></div>
+      <div class="field"><label>إضافته إلى الخزنات</label>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="allv" onchange="document.querySelectorAll('.vk').forEach(c=>c.checked=this.checked)"/> <b>كل الخزنات</b></label>
+          ${db.vaults.map(v=>`<label class="check"><input type="checkbox" class="vk" value="${v.id}"/> ${v.name}</label>`).join('')}
+        </div>
+        <div class="hint">يمكنك اختيار خزنة محددة أو وضعه في الجميع.</div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveMember()">حفظ العضو</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+async function saveMember(){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const name=document.getElementById('f_name').value.trim();
+  if(!name)return toast('اكتب اسم العضو');
+  const {data,error}=await sb.from('members').insert({name}).select('id').single();
+  if(error)return toast('تعذّر حفظ العضو');
+  const vids=[...document.querySelectorAll('.vk:checked')].map(c=>c.value);
+  if(vids.length) await sb.from('vault_members').insert(vids.map(vid=>({vault_id:vid, member_id:data.id})));
+  closeModal();toast(`تمت إضافة <b>${name}</b>`);await reload();
+}
+
+function openVaultModal(){
+  if(!guard())return;
+  openModal(`
+    <div class="modal-head"><h3>خزنة جديدة</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>اسم الخزنة</label><input id="v_name" placeholder="مثال: صيانة السيارات"/></div>
+      <div class="field"><label>نوع الخزنة</label>
+        <div class="seg">
+          <label><input type="radio" name="vtype" value="periodic" checked onchange="toggleExt(false)"/><span class="opt">دورية مفتوحة الغرض</span></label>
+          <label><input type="radio" name="vtype" value="external_debt" onchange="toggleExt(true)"/><span class="opt">سداد دين خارجي</span></label>
+        </div>
+      </div>
+      <div class="field"><label>الدورة</label>
+        <select id="v_cycle">${Object.entries(CYCLES).map(([k,val])=>`<option value="${k}" ${k==='monthly'?'selected':''}>${val}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>اشتراك كل عضو في الدورة (${CUR})</label><input id="v_amount" type="number" min="0" placeholder="100"/></div>
+      <div id="ext_fields" style="display:none">
+        <div class="field"><label>اسم الدائن الخارجي</label><input id="v_creditor" placeholder="مثال: الجار أبو فيصل"/></div>
+        <div class="field"><label>إجمالي الدين المطلوب سداده (${CUR})</label><input id="v_cred_total" type="number" min="0" placeholder="4000"/></div>
+      </div>
+      <div id="periodic_fields">
+        <div class="field"><label>الرصيد الافتتاحي (${CUR})</label><input id="v_open" type="number" min="0" placeholder="0"/>
+          <div class="hint">المبلغ الموجود مسبقًا عند بدء استخدام النظام.</div></div>
+        <div class="field"><label>سقف / هدف الخزنة (اختياري)</label><input id="v_target" type="number" min="0" placeholder="اتركه فارغًا لسقف مفتوح"/></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveVault()">إنشاء الخزنة</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+function toggleExt(on){document.getElementById('ext_fields').style.display=on?'block':'none';
+  document.getElementById('periodic_fields').style.display=on?'none':'block';}
+async function saveVault(){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const name=document.getElementById('v_name').value.trim();
+  const type=document.querySelector('[name=vtype]:checked').value;
+  const amount=+document.getElementById('v_amount').value||0;
+  if(!name)return toast('اكتب اسم الخزنة');
+  const row={name,type,cycle:document.getElementById('v_cycle').value,contribution_amount:amount};
+  if(type==='external_debt'){row.creditor_name=document.getElementById('v_creditor').value.trim();
+    row.creditor_total=+document.getElementById('v_cred_total').value||0;}
+  else{row.opening_balance=+document.getElementById('v_open').value||0;
+    const tg=document.getElementById('v_target').value;row.target_amount=tg?+tg:null;}
+  const {error}=await sb.from('vaults').insert(row);
+  if(error)return toast('تعذّر إنشاء الخزنة');
+  closeModal();toast(`تم إنشاء خزنة <b>${name}</b>`);await loadData();go('vaults');
+}
+
+function openWithdrawModal(vid){
+  if(!guard())return;const v=vaultById(vid);
+  openModal(`
+    <div class="modal-head"><h3>سحب / صرف من ${v.name}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>نوع العملية</label>
+        <div class="seg">
+          <label><input type="radio" name="wtype" value="spending" checked onchange="toggleW(false)"/><span class="opt">صرف لغرض الخزنة<br><small style="color:var(--muted)">لا يُعد دينًا</small></span></label>
+          <label><input type="radio" name="wtype" value="temp_withdraw" onchange="toggleW(true)"/><span class="opt">سحب مؤقت لعضو<br><small style="color:var(--muted)">يُسجَّل دينًا</small></span></label>
+        </div>
+      </div>
+      <div class="field" id="w_member_field" style="display:none"><label>العضو الساحب</label>
+        <select id="w_member">${v.members.map(m=>`<option value="${m}">${memberName(m)}</option>`).join('')}</select>
+        <div class="hint">سيُسجَّل المبلغ دينًا عليه ويظهر في صفحة الديون.</div>
+      </div>
+      <div class="field"><label>المبلغ (${CUR})</label><input id="w_amount" type="number" min="1" placeholder="0"/></div>
+      <div class="field"><label>الوصف</label><input id="w_note" placeholder="مثال: مساهمة علاج / طارئ"/></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-gold" onclick="saveWithdraw('${vid}')">تنفيذ وتدوين</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+function toggleW(on){document.getElementById('w_member_field').style.display=on?'block':'none'}
+async function saveWithdraw(vid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const type=document.querySelector('[name=wtype]:checked').value;
+  const amount=+document.getElementById('w_amount').value||0;
+  if(amount<=0)return toast('أدخل مبلغًا صحيحًا');
+  if(amount>vaultBalance(vid))return toast('المبلغ أكبر من رصيد الخزنة');
+  const member=type==='temp_withdraw'?document.getElementById('w_member').value:null;
+  const note=document.getElementById('w_note').value.trim()||(type==='spending'?'صرف للغرض':'سحب مؤقت');
+  const {error}=await sb.from('transactions').insert({vault_id:vid,type,amount,member_id:member,note});
+  if(error)return toast('تعذّر التنفيذ');
+  closeModal();toast(type==='temp_withdraw'?`سُجِّل دين <b>${fmt(amount)} ${CUR}</b> على ${memberName(member)}`:`تم صرف <b>${fmt(amount)} ${CUR}</b>`);
+  await reload();
+}
+
+function openExtRepay(vid){
+  if(!guard())return;const e=externalRemaining(vid),v=vaultById(vid);
+  openModal(`<div class="modal-head"><h3>دفعة للدائن</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>الدائن</label><input value="${v.creditorName||'—'}" disabled/></div>
+      <div class="field"><label>المتبقي حاليًا</label><input value="${fmt(e.remaining)} ${CUR}" disabled/></div>
+      <div class="field"><label>مبلغ الدفعة (${CUR})</label><input id="er_amt" type="number" min="1" placeholder="0"/></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveExtRepay('${vid}')">تسجيل الدفعة</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+async function saveExtRepay(vid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const amt=+document.getElementById('er_amt').value||0;
+  if(amt<=0)return toast('أدخل مبلغًا');
+  if(amt>vaultBalance(vid))return toast('رصيد الخزنة لا يكفي لهذه الدفعة');
+  const {error}=await sb.from('transactions').insert({vault_id:vid,type:'external_repay',amount:amt,member_id:null,note:'دفعة للدائن'});
+  if(error)return toast('تعذّر تسجيل الدفعة');
+  closeModal();toast(`تم تسجيل دفعة <b>${fmt(amt)} ${CUR}</b> للدائن`);await reload();
+}
+
+function openRepay(mid,vid,remaining){
+  if(!guard())return;
+  openModal(`<div class="modal-head"><h3>سداد دين ${memberName(mid)}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>الخزنة</label><input value="${vaultById(vid).name}" disabled/></div>
+      <div class="field"><label>المتبقي عليه</label><input value="${fmt(remaining)} ${CUR}" disabled/></div>
+      <div class="field"><label>مبلغ السداد (${CUR})</label><input id="rp_amt" type="number" min="1" max="${remaining}" placeholder="${fmt(remaining)}"/>
+        <div class="hint">يعود المبلغ إلى نفس الخزنة وينقص الدين.</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-gold" onclick="saveRepay('${mid}','${vid}')">تسجيل السداد</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+async function saveRepay(mid,vid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const amt=+document.getElementById('rp_amt').value||0;
+  if(amt<=0)return toast('أدخل مبلغًا');
+  const {error}=await sb.from('transactions').insert({vault_id:vid,type:'debt_repay',amount:amt,member_id:mid,note:'سداد دين'});
+  if(error)return toast('تعذّر تسجيل السداد');
+  closeModal();toast(`سُجِّل سداد <b>${fmt(amt)} ${CUR}</b> من ${memberName(mid)}`);await reload();
+}
+
+function openMemberToVault(vid){
+  if(!guard())return;const v=vaultById(vid);
+  const avail=db.members.filter(m=>!v.members.includes(m.id));
+  openModal(`<div class="modal-head"><h3>إضافة عضو إلى ${v.name}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      ${avail.length?`<div class="field"><label>اختر الأعضاء</label><div class="checks">
+        ${avail.map(m=>`<label class="check"><input type="checkbox" class="addm" value="${m.id}"/> ${m.name}</label>`).join('')}
+      </div></div>`:'<div class="empty">كل الأعضاء مضافون لهذه الخزنة بالفعل.</div>'}
+    </div>
+    <div class="modal-foot">${avail.length?`<button class="btn btn-primary" onclick="saveMemberToVault('${vid}')">إضافة</button>`:''}<button class="btn btn-ghost" onclick="closeModal()">إغلاق</button></div>`);
+}
+async function saveMemberToVault(vid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const ids=[...document.querySelectorAll('.addm:checked')].map(x=>x.value);
+  if(!ids.length)return toast('اختر عضوًا واحدًا على الأقل');
+  const {error}=await sb.from('vault_members').insert(ids.map(mid=>({vault_id:vid,member_id:mid})));
+  if(error)return toast('تعذّرت الإضافة');
+  closeModal();toast(`أُضيف ${ids.length} أعضاء للخزنة`);await reload();
+}
+
+async function quickPay(vid,mid){
+  if(!guard())return;
+  const v=vaultById(vid);
+  const {error}=await sb.from('transactions').insert({vault_id:vid,type:'contribution',amount:v.amount,member_id:mid,note:'اشتراك الدورة',period:CURRENT_PERIOD});
+  if(error)return toast('تعذّر تسجيل الاشتراك');
+  toast(`سُجِّل اشتراك <b>${memberName(mid)}</b>`);await reload();
+}
+
+/* ---------- تأكيد عام ---------- */
+function confirmAction(msg,onYes){
+  openModal(`<div class="modal-head"><h3>تأكيد</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body"><p style="font-size:15px;color:var(--ink);line-height:1.8">${msg}</p></div>
+    <div class="modal-foot"><button class="btn" style="background:var(--danger);color:#fff" id="confirmYes">نعم، تأكيد</button>
+      <button class="btn btn-ghost" onclick="closeModal()">تراجع</button></div>`);
+  document.getElementById('confirmYes').onclick=onYes;
+}
+
+/* ---------- تعديل / حذف عضو ---------- */
+function openEditMember(mid){
+  if(!guard())return;const m=db.members.find(x=>x.id===mid);
+  openModal(`<div class="modal-head"><h3>تعديل عضو</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>اسم العضو</label><input id="em_name" value="${m.name}"/></div>
+      <div class="field"><label>عضوية الخزنات</label><div class="checks">
+        ${db.vaults.map(v=>`<label class="check"><input type="checkbox" class="emv" value="${v.id}" ${v.members.includes(mid)?'checked':''}/> ${v.name}</label>`).join('')}
+      </div></div>
+      <div class="field"><button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:#eccfcb" onclick="askDeleteMember('${mid}')">حذف هذا العضو نهائيًا</button></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveMemberEdit('${mid}')">حفظ التعديل</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+async function saveMemberEdit(mid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const name=document.getElementById('em_name').value.trim();if(!name)return toast('اكتب اسم العضو');
+  const checked=[...document.querySelectorAll('.emv:checked')].map(c=>c.value);
+  const {error}=await sb.from('members').update({name}).eq('id',mid);
+  if(error)return toast('تعذّر الحفظ');
+  const cur=db.vaults.filter(v=>v.members.includes(mid)).map(v=>v.id);
+  const toAdd=checked.filter(id=>!cur.includes(id));
+  const toDel=cur.filter(id=>!checked.includes(id));
+  if(toAdd.length) await sb.from('vault_members').insert(toAdd.map(vid=>({vault_id:vid,member_id:mid})));
+  for(const vid of toDel){ await sb.from('vault_members').delete().eq('vault_id',vid).eq('member_id',mid); }
+  closeModal();toast('تم حفظ التعديل');await reload();
+}
+function askDeleteMember(mid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const m=db.members.find(x=>x.id===mid);
+  const debt=memberDebtTotal(mid);
+  const hasTx=db.txns.some(t=>t.member===mid);
+  const warn=debt>0?` تنبيه: عليه دين قائم <b>${fmt(debt)} ${CUR}</b> وستُحذف حركاته أيضًا.`:(hasTx?' له حركات مسجّلة ستُحذف معه.':'');
+  confirmAction(`حذف <b>${m.name}</b> نهائيًا؟${warn}`, async ()=>{
+    const {error}=await sb.from('members').delete().eq('id',mid);
+    if(error)return toast('تعذّر الحذف');
+    closeModal();toast('تم حذف العضو');await reload();
+  });
+}
+
+/* ---------- تعديل / حذف حركة (تصحيح المبالغ) ---------- */
+function openEditTxn(id){
+  if(!guard())return;const x=db.txns.find(t=>t.id===id);
+  const labels={opening:'افتتاحي',contribution:'اشتراك',spending:'صرف للغرض',temp_withdraw:'سحب مؤقت (دين)',debt_repay:'سداد دين',external_repay:'سداد للدائن'};
+  openModal(`<div class="modal-head"><h3>تعديل المبلغ</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>نوع الحركة</label><input value="${labels[x.type]}" disabled/></div>
+      ${x.member?`<div class="field"><label>العضو</label><input value="${memberName(x.member)}" disabled/></div>`:''}
+      <div class="field"><label>المبلغ (${CUR})</label><input id="et_amt" type="number" min="1" value="${x.amount}"/>
+        <div class="hint">تصحيح المبلغ يُحدّث الرصيد والديون تلقائيًا.</div></div>
+      <div class="field"><label>الوصف</label><input id="et_note" value="${x.note||''}"/></div>
+      <div class="field"><button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:#eccfcb" onclick="askDeleteTxn('${id}')">حذف هذه الحركة</button></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveTxnEdit('${id}')">حفظ التعديل</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+async function saveTxnEdit(id){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const amt=+document.getElementById('et_amt').value||0;if(amt<=0)return toast('أدخل مبلغًا صحيحًا');
+  const note=document.getElementById('et_note').value.trim();
+  const upd={amount:amt}; if(note) upd.note=note;
+  const {error}=await sb.from('transactions').update(upd).eq('id',id);
+  if(error)return toast('تعذّر التعديل');
+  closeModal();toast(`تم تعديل المبلغ إلى <b>${fmt(amt)} ${CUR}</b>`);await reload();
+}
+function askDeleteTxn(id){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  confirmAction('حذف هذه الحركة نهائيًا؟ سيتأثّر رصيد الخزنة.', async ()=>{
+    const {error}=await sb.from('transactions').delete().eq('id',id);
+    if(error)return toast('تعذّر الحذف');
+    closeModal();toast('تم حذف الحركة');await reload();
+  });
+}
+
+/* ---------- تعديل مبالغ الخزنة / حذفها ---------- */
+function openEditVault(vid){
+  if(!guard())return;const v=vaultById(vid);
+  openModal(`<div class="modal-head"><h3>تعديل مبالغ الخزنة</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>اشتراك العضو في الدورة (${CUR})</label><input id="ev_amount" type="number" min="0" value="${v.amount}"/></div>
+      ${v.type==='external_debt'
+        ? `<div class="field"><label>إجمالي الدين الخارجي (${CUR})</label><input id="ev_cred" type="number" min="0" value="${v.creditorTotal||0}"/></div>`
+        : `<div class="field"><label>الرصيد الافتتاحي (${CUR})</label><input id="ev_open" type="number" value="${v.opening||0}"/>
+            <div class="hint">المبلغ الذي كان موجودًا عند بدء النظام.</div></div>
+           <div class="field"><label>الهدف / السقف (اختياري)</label><input id="ev_target" type="number" value="${v.target||''}" placeholder="مفتوح"/></div>`}
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveVaultEdit('${vid}')">حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>`);
+}
+async function saveVaultEdit(vid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const v=vaultById(vid);
+  const upd={contribution_amount:+document.getElementById('ev_amount').value||0};
+  if(v.type==='external_debt'){upd.creditor_total=+document.getElementById('ev_cred').value||0;}
+  else{upd.opening_balance=+document.getElementById('ev_open').value||0;const tg=document.getElementById('ev_target').value;upd.target_amount=tg?+tg:null;}
+  const {error}=await sb.from('vaults').update(upd).eq('id',vid);
+  if(error)return toast('تعذّر الحفظ');
+  closeModal();toast('تم حفظ تعديل المبالغ');await reload();
+}
+function askDeleteVault(vid){
+  if(!isManager){toast('هذا الإجراء متاح للمدير فقط');return;}
+  const v=vaultById(vid);
+  confirmAction(`حذف خزنة <b>${v.name}</b> وكل حركاتها نهائيًا؟`, async ()=>{
+    const {error}=await sb.from('vaults').delete().eq('id',vid);
+    if(error)return toast('تعذّر الحذف');
+    closeModal();toast('تم حذف الخزنة');currentVaultId=null;await loadData();go('vaults');
+  });
+}
+
+/* ---------- أدوات ---------- */
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(html){const t=document.getElementById('toast');t.innerHTML=html;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600)}
+function sealSvg(size=64,cls=''){return `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 64 64" fill="none">
+  <path d="M32 3l24 9v18c0 16-10.4 26.4-24 31C18.4 56.4 8 46 8 30V12l24-9z" fill="#0a2a66" stroke="#c6a04e" stroke-width="2.2"/>
+  <circle cx="32" cy="28" r="7" fill="none" stroke="#e3cd9a" stroke-width="2.4"/>
+  <rect x="30.4" y="32" width="3.2" height="11" rx="1.6" fill="#e3cd9a"/></svg>`}
+function ico(n,s=15){const p={
+  vault:'<path d="M3 5h18v14H3z"/><circle cx="12" cy="12" r="3"/>',
+  coins:'<circle cx="8" cy="8" r="5"/><path d="M10.5 13a5 5 0 1 0 3-9"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  hand:'<path d="M5 11V6a2 2 0 1 1 4 0M9 11V4a2 2 0 1 1 4 0v7M13 11V6a2 2 0 1 1 4 0v8a6 6 0 0 1-6 6H9a4 4 0 0 1-4-4v-1l-2-3"/>',
+  ext:'<path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 6a3 3 0 0 1 0 6M21 20a5.5 5.5 0 0 0-4-5"/>',
+  check:'<path d="M4 12l5 5L20 6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  back:'<path d="M9 6l6 6-6 6"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M9 7V4h6v3"/>'
+}[n]||'';return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px">${p}</svg>`}
+
+/* تشغيل — إن وُجدت جلسة سابقة نبدأ مباشرة، وإلا نعرض بوابة الدخول. */
+showGate('family');
+(async ()=>{
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session) return;
+  const {data:m} = await sb.from('managers').select('user_id').eq('user_id', session.user.id).maybeSingle();
+  await enterApp(!!m);
+})();
+</script>
+</body>
+</html>

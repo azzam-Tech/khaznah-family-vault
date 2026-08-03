@@ -361,7 +361,28 @@
    ============================================================ */
 const CUR = 'ر.س';
 const CYCLES = {weekly:'أسبوعية', monthly:'شهرية', quarterly:'ربع سنوية', semiannual:'نصف سنوية', annual:'سنوية'};
-const CURRENT_PERIOD = '2026-06'; // الدورة الحالية (للعرض التجريبي)
+
+// تُحسب الدورة الحالية من تاريخ اليوم حسب نوع دورة الخزنة — تتجدّد تلقائيًا
+function isoWeek(d){
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-day);
+  const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));
+  const wk=Math.ceil(((t-ys)/86400000+1)/7);
+  return {year:t.getUTCFullYear(), week:wk};
+}
+function periodForCycle(cycle, d=new Date()){
+  const y=d.getFullYear(), m=d.getMonth()+1;
+  switch(cycle){
+    case 'weekly':    { const w=isoWeek(d); return `W${w.year}-${String(w.week).padStart(2,'0')}`; }
+    case 'quarterly': return `${y}-Q${Math.floor((m-1)/3)+1}`;
+    case 'semiannual':return `${y}-H${m<=6?1:2}`;
+    case 'annual':    return `${y}`;
+    case 'monthly':
+    default:          return `${y}-${String(m).padStart(2,'0')}`;
+  }
+}
+const periodForVault = v => periodForCycle(v.cycle);   // دورة الخزنة الحالية
+const CURRENT_MONTH  = periodForCycle('monthly');       // الشهر الحالي (للوحة)
 
 let isManager = false;
 let currentVaultId = null;
@@ -385,7 +406,8 @@ function vaultTxns(vid){return db.txns.filter(x=>x.vault===vid).slice().sort((a,
 // اشتراكات الدورة الحالية لخزنة: من سدّد ومن تأخّر
 function cycleStatus(vid){
   const v = vaultById(vid);
-  const paid = new Set(db.txns.filter(x=>x.vault===vid && x.type==='contribution' && x.period===CURRENT_PERIOD).map(x=>x.member));
+  const p = periodForVault(v);
+  const paid = new Set(db.txns.filter(x=>x.vault===vid && x.type==='contribution' && x.period===p).map(x=>x.member));
   return v.members.map(mid => ({member:mid, paid:paid.has(mid)}));
 }
 // ديون عضو من السحب المؤقت، مفصّلة بالخزنة
@@ -534,7 +556,7 @@ function renderDashboard(){
   el.innerHTML = `
     <div class="page-head">
       <div>
-        <div class="eyebrow">نظرة عامة · دورة ${CYCLES.monthly} ${CURRENT_PERIOD}</div>
+        <div class="eyebrow">نظرة عامة · دورة ${CYCLES.monthly} ${CURRENT_MONTH}</div>
         <h2>لوحة خزنة العائلة</h2>
         <p>إجمالي ${db.vaults.length} خزنات · ${db.members.length} أعضاء</p>
       </div>
@@ -686,7 +708,7 @@ function renderVaultDetail(vid){
       <button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:#eccfcb" onclick="askDeleteVault('${vid}')">${ico('trash',14)} حذف الخزنة</button>
     </div>`:''}
 
-    <div class="section-title">اشتراكات الدورة الحالية (${CURRENT_PERIOD})</div>
+    <div class="section-title">اشتراكات الدورة الحالية (${periodForVault(v)})</div>
     <div class="card card-table"><table class="tbl">
       <thead><tr><th>العضو</th><th>الحالة</th><th>المبلغ</th>${isManager?'<th>إجراء</th>':''}</tr></thead>
       <tbody>${status.map(s=>`<tr>
@@ -954,7 +976,7 @@ async function saveMemberToVault(vid){
 async function quickPay(vid,mid){
   if(!guard())return;
   const v=vaultById(vid);
-  const {error}=await sb.from('transactions').insert({vault_id:vid,type:'contribution',amount:v.amount,member_id:mid,note:'اشتراك الدورة',period:CURRENT_PERIOD});
+  const {error}=await sb.from('transactions').insert({vault_id:vid,type:'contribution',amount:v.amount,member_id:mid,note:'اشتراك الدورة',period:periodForVault(v)});
   if(error)return toast('تعذّر تسجيل الاشتراك');
   toast(`سُجِّل اشتراك <b>${memberName(mid)}</b>`);await reload();
 }

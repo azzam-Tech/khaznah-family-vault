@@ -337,6 +337,7 @@
     <button class="tab" data-view="vaults" onclick="go('vaults')">الخزنات</button>
     <button class="tab" data-view="members" onclick="go('members')">الأعضاء</button>
     <button class="tab" data-view="debts" onclick="go('debts')">الديون</button>
+    <button class="tab" data-view="reports" onclick="go('reports')">التقارير</button>
   </div>
 </nav>
 
@@ -346,6 +347,7 @@
   <section id="vault-detail" class="view"></section>
   <section id="members" class="view"></section>
   <section id="debts" class="view"></section>
+  <section id="reports" class="view"></section>
 </main>
 
 <!-- Modal host -->
@@ -440,6 +442,7 @@ function go(view){
   if(view==='vaults')renderVaults();
   if(view==='members')renderMembers();
   if(view==='debts')renderDebts();
+  if(view==='reports')renderReports();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id===id))}
@@ -795,6 +798,71 @@ function renderDebts(){
           <div class="progress" style="margin-top:12px"><i style="width:${pct}%"></i></div>
           <div style="font-size:12px;color:var(--muted);margin-top:6px">سُدّد ${fmt(e.repaid)} من ${fmt(v.creditorTotal)} (${pct}%)</div>
         </div>`}).join('')}`:''}
+  `;
+}
+
+/* ---------- التقارير (سجل شهري لكل الالتزامات) ---------- */
+// كل الأشهر (YYYY-MM) التي فيها اشتراكات شهرية + الشهر الحالي
+function monthlyPeriods(){
+  const set = new Set(db.txns.filter(x=>x.type==='contribution' && /^\d{4}-\d{2}$/.test(x.period||'')).map(x=>x.period));
+  set.add(periodForCycle('monthly'));
+  return [...set].sort();
+}
+function paidInVaultPeriod(mid, vid, period){
+  return db.txns.some(x=>x.type==='contribution' && x.member===mid && x.vault===vid && x.period===period);
+}
+function renderReports(){
+  const el=document.getElementById('reports');
+  const months = monthlyPeriods();
+  const monthlyVaults = db.vaults.filter(v=>v.cycle==='monthly');
+  const members = db.members.filter(m=>monthlyVaults.some(v=>v.members.includes(m.id)));
+
+  let overall;
+  if(!months.length || !members.length){
+    overall = `<div class="card empty">${sealSvg(54)}<div>لا توجد بيانات اشتراكات شهرية بعد.</div></div>`;
+  } else {
+    overall = `<div class="card card-table"><table class="tbl">
+      <thead><tr><th>العضو</th>${months.map(mo=>`<th style="text-align:center">${mo}</th>`).join('')}</tr></thead>
+      <tbody>${members.map(m=>{
+        const cells = months.map(mo=>{
+          const owed = monthlyVaults.filter(v=>v.members.includes(m.id));
+          const paid = owed.filter(v=>paidInVaultPeriod(m.id, v.id, mo)).length;
+          if(!owed.length) return `<td style="text-align:center;color:var(--muted)">—</td>`;
+          if(paid===owed.length) return `<td style="text-align:center"><span class="chip ok">أوفى</span></td>`;
+          if(paid===0) return `<td style="text-align:center"><span class="chip late">تخلّف</span></td>`;
+          return `<td style="text-align:center"><span class="chip late">${paid}/${owed.length}</span></td>`;
+        }).join('');
+        return `<tr><td><div class="person"><span class="avatar">${m.name[0]}</span>${m.name}</div></td>${cells}</tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+
+  const perVault = db.vaults.map(v=>{
+    if(!v.members.length) return '';
+    const periods = [...new Set(db.txns.filter(x=>x.type==='contribution' && x.vault===v.id && x.period).map(x=>x.period))];
+    const cur = periodForVault(v); if(!periods.includes(cur)) periods.push(cur);
+    periods.sort();
+    const rows = v.members.map(mid=>{
+      const cells = periods.map(p=> paidInVaultPeriod(mid,v.id,p)
+        ? `<td style="text-align:center"><span class="chip ok">سدّد</span></td>`
+        : `<td style="text-align:center"><span class="chip late">متأخر</span></td>`).join('');
+      return `<tr><td><div class="person"><span class="avatar">${memberName(mid)[0]}</span>${memberName(mid)}</div></td>${cells}</tr>`;
+    }).join('');
+    return `<div class="section-title">${v.name} · ${CYCLES[v.cycle]}</div>
+      <div class="card card-table"><table class="tbl">
+        <thead><tr><th>العضو</th>${periods.map(p=>`<th style="text-align:center">${p}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="page-head">
+      <div><div class="eyebrow">شفافية</div><h2>تقارير الالتزامات الشهرية</h2>
+        <p>من أوفى بكل التزاماته كل شهر ومن تخلّف — عبر جميع الأشهر</p></div>
+    </div>
+    <div class="section-title">ملخّص إجمالي (كل الخزنات الشهرية)</div>
+    ${overall}
+    <div style="height:10px"></div>
+    <div class="section-title">تفصيل حسب الخزنة</div>
+    ${perVault || `<div class="card empty">${sealSvg(54)}<div>لا توجد خزنات بأعضاء بعد.</div></div>`}
   `;
 }
 
